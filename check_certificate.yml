@@ -1,10 +1,13 @@
 ---
-- name: Check if there is expired certificates or less than 14 days to expire
+- name: Check if there are expired certificates or ones that expire in the next 14 days
   hosts: all
   
   tasks:
-  - name: WSUS CleanUp
-    win_shell: Invoke-Command -ComputerName localhost {dir Cert:\LocalMachine\my | ? NotAfter -lt (Get-Date).AddDays(14)}
-    register: output
+  - name: Check certificate expiration
+    win_shell: |
+      dir Cert:\LocalMachine\my |
+        Where-Object { $_.NotAfter -lt (Get-Date).AddDays(14) }
+    register: expired_certs
 
-  - debug: var=output.stdout_lines
+  - debug:
+      var: expired_certs.stdout_lines
